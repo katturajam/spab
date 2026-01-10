@@ -230,20 +230,28 @@
             display: none !important;
         }
 
-        /* Add this to your <style> */
         @media print {
-            .buttons {
+            
+              /* Hide logo/header section ONLY during print */
+              #headerSection {
                 display: none !important;
-            }
-
-            .header h2 {
+              }
+            
+              /* Hide action buttons */
+              .buttons {
                 display: none !important;
-            }
-
-            * {
+              }
+            
+              /* Ensure background & watermark are printed */
+              * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
-            }
+              }
+            
+              /* Remove default browser margins (important for centering) */
+              body {
+                margin: 0;
+              }
         }
 
     </style>
