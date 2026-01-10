@@ -56,7 +56,7 @@
             inset: 0;
             background-image: url("./vehicle.png");
             background-repeat: no-repeat;
-            background-position: center center;
+            background-position: center;
             background-size: 100% 100%;
             opacity: 0.08;
             filter: blur(3px);
@@ -232,23 +232,20 @@
 
         /* Add this to your <style> */
         @media print {
-
-            /* Hide buttons and action section */
             .buttons {
                 display: none !important;
             }
 
-            /* Hide title if you want */
             .header h2 {
                 display: none !important;
             }
 
-            /* Optional: ensure all backgrounds are printed */
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
         }
+
     </style>
 </head>
 
@@ -545,37 +542,40 @@
             const invoice = document.getElementById("invoice");
             const headerSection = document.getElementById("headerSection");
 
-            // Handle "exclude logo" checkbox
-            headerSection.style.display = document.getElementById("excludeHeader").checked ? "none" : "flex";
+            // Exclude logo if checked
+            headerSection.style.display =
+                document.getElementById("excludeHeader").checked ? "none" : "flex";
 
-            // Render entire invoice div to canvas
-            const canvas = await html2canvas(invoice, { scale: 2, useCORS: true });
+            const canvas = await html2canvas(invoice, {
+                scale: 2,
+                useCORS: true
+            });
+
             const imgData = canvas.toDataURL("image/png");
 
             const imgWidth = canvas.width;
             const imgHeight = canvas.height;
 
-            // Calculate ratios to fit width or height
-            const ratioWidth = pageWidth / imgWidth;
-            const ratioHeight = pageHeight / imgHeight;
-
-            // Use smaller ratio to ensure content fits entirely on page
-            const ratio = Math.min(ratioWidth, ratioHeight);
+            const ratio = Math.min(
+                pageWidth / imgWidth,
+                pageHeight / imgHeight
+            );
 
             const width = imgWidth * ratio;
             const height = imgHeight * ratio;
 
-            // Center horizontally & vertically
             const x = (pageWidth - width) / 2;
             const y = (pageHeight - height) / 2;
 
+            // ✅ SINGLE PAGE ONLY
             pdf.addImage(imgData, "PNG", x, y, width, height, undefined, "FAST");
+
             pdf.save("borwell.pdf");
 
-            // Reset header visibility
             headerSection.style.display = "flex";
             hideButtons(false);
         }
+
 
 
         function downloadImage() {
@@ -620,9 +620,9 @@
             const headerSection = document.getElementById("headerSection");
             const hideHeader = document.getElementById("excludeHeader").checked;
 
-            // Hide logo only if exporting and checkbox is checked
             headerSection.classList.toggle("hide", h && hideHeader);
         }
+
 
     </script>
 
