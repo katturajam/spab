@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<title>ஸ்ரீ பச்சை அம்மன் போர்வெல்</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+body {
+    margin: 0;
+    background: #f4f6f8;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+}
+
+#invoice {
+    width: 100%;
+    max-width: 900px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.poster-container, .poster { width: 100%; text-align: center; }
+.poster img { max-width: 100%; height: auto; }
+
+.content {
+    padding: 15px 30px 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* WATERMARK */
+.content::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("./vehicle.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100% 100%;
+    opacity: 0.08;
+    filter: blur(4px);
+    z-index: 0;
+}
+
+.content>* { position: relative; z-index: 1; }
+
+/* SECTION STYLING */
+.section { margin-top: 25px; }
+.section-title {
+    font-size: 18px;
+    border-bottom: 2px solid #2d6cdf;
+    margin-bottom: 10px;
+}
+
+/* TABLES */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+td { padding: 8px; vertical-align: middle; }
+
+/* CENTER HEADER CELLS */
+table.four-column td, table td { text-align: center; }
+
+/* PRICE BOX */
+.price-box {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+input { padding: 5px; text-align: right; font-size: 14px; }
+
+/* FEET INPUT */
+.feet-input {
+    width: 60px;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* DRILLING TOTAL ROW */
+.drill-row .feet-input:disabled {
+    border: none;
+    background: transparent;
+    color: #000;
+    font-weight: bold;
+    pointer-events: none;
+    text-align: center;
+}
+
+/* SECTION TOTALS - PVC / FLUSHING */
+.section-total {
+    border: none;
+    background: #2d6cdf;
+    color: #fff;
+    font-weight: bold;
+    pointer-events: none;
+    text-align: center;
+    width: 6ch;
+    max-width: 6ch;
+    font-size: 14px;
+}
+
+/* TOTAL ROW STYLING */
+.total-row {
+    font-weight: bold;
+    background: #2d6cdf;
+    color: #fff;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* SLAB ROW */
+.slab-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+}
+.icon-holder { width: 26px; display: flex; justify-content: center; }
+.add-slab {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #2d6cdf;
+    color: #fff;
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 22px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+}
+.add-slab.hidden { visibility: hidden; pointer-events: none; }
+
+/* BUTTONS */
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 25px;
+}
+.action-btn, .checkbox-btn {
+    padding: 12px 22px;
+    background: #2d6cdf;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.checkbox-btn input { display: none; }
+
+/* PRINT */
+@media print {
+    .buttons { display: none !important; }
+}
+</style>
+</head>
+
+<body>
+<div id="invoice">
+
+    <div class="poster-container" id="headerSection">
+        <div class="poster">
+            <img src="./header.png">
+        </div>
+    </div>
+
+    <div class="content">
+
+        <h2 style="text-align:center">போர்வெல் கட்டண விவரம்</h2>
+
+        <!-- CUSTOMER INFO -->
+        <div class="section">
+            <table id="customerInfo">
+                <tr>
+                    <td style="width:50%;font-weight:bold;text-align:left">
+                        பெயர்: <input type="text" style="width:70%;text-align:left">
+                    </td>
+                    <td style="width:50%;font-weight:bold;text-align:left">
+                        மொபைல்: <input type="tel" style="width:60%;text-align:left">
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- DRILLING -->
+        <div class="section">
+            <div class="section-title">டிரில்லிங் கட்டணம்</div>
+            <table>
+                <tr style="font-weight:bold;text-align:center">
+                    <td>அடிகள் வாரியாக</td>
+                    <td>6.5 இன்ச்</td>
+                    <td>8 இன்ச்</td>
+                    <td></td>
+                </tr>
+
+                <!-- INITIAL SLAB -->
+                <tr class="drill-row" data-start="1" data-end="300">
+                    <td class="slab-cell">
+                        <div class="icon-holder">
+                            <div class="add-slab" onclick="addNextSlab()">+</div>
+                        </div>
+                        <span>
+                            <input class="feet-input" value="1" disabled> –
+                            <input class="feet-input end-feet"
+                                   value="300"
+                                   disabled
+                                   oninput="updateEndFeet(this)"
+                                   onblur="validateEndFeet(this)"> அடி
+                        </span>
+                    </td>
+                    <td>
+                        <div class="price-box">₹ <input class="rate65" type="number" oninput="calculateTotals()"></div>
+                    </td>
+                    <td>
+                        <div class="price-box">₹ <input class="rate8" type="number" oninput="calculateTotals()"></div>
+                    </td>
+                    <td></td>
+                </tr>
+
+                <!-- TOTAL ROW -->
+                <tr class="total-row">
+                    <td id="drill_total_label">டிரில்லிங் 300 அடிகளுக்கு மொத்தம்</td>
+                    <td><div class="price-box">₹ <span id="total_65">0</span></div></td>
+                    <td><div class="price-box">₹ <span id="total_8">0</span></div></td>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- PVC CASING -->
+        <div class="section">
+            <div class="section-title">கேசிங் பைப்</div>
+            <table class="four-column">
+                <tr style="font-weight:bold;text-align:center">
+                    <td></td>
+                    <td style="text-align: center;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PVC 7 இன்ச்</td>
+                    <td style="text-align: center;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PVC 10 இன்ச்</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>1 அடிக்கு</td>
+                    <td>
+                        <div class="price-box">₹ <input type="number" min="0" value="0" id="pvc7_1feet_price" oninput="calculatePVC()"></div>
+                    </td>
+                    <td>
+                        <div class="price-box">₹ <input type="number" min="0" value="0" id="pvc10_1feet_price" oninput="calculatePVC()"></div>
+                    </td>
+                    <td></td>
+                </tr>
+                <tr class="total-row">
+                    <td style="text-align:center;">
+                        கேசிங் <input class="feet-input section-total" type="number" min="0" value="1500" disabled id="pvc_total_feet">அடிகளுக்கு மொத்தம்
+                    </td>
+                    <td><div class="price-box">₹ <span id="pvc7_total_feet_price">0</span></div></td>
+                    <td><div class="price-box">₹ <span id="pvc10_total_feet_price">0</span></div></td>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
+
+
+        <!-- FLUSHING / OTHER -->
+        <div class="section">
+            <div class="section-title">மற்ற கட்டணம்</div>
+            <table class="four-column">
+                <tr>
+                    <td>ஃபிளஷிங் 1 அடிக்கு</td>
+                    <td>
+                        <div class="price-box">₹ <input type="number" min="0" value="0" id="flushing_1feet_price" oninput="calculateFlushing()"></div>
+                    </td>
+                    <td style="text-align:center;" class="total-row">
+                        ஃபிளஷிங் <input class="feet-input section-total" type="number" min="0" value="1500" disabled id="flushing_total_feet">அடிகளுக்கு மொத்தம்
+                    </td>
+                    <td class="total-row">
+                        <div class="price-box">₹ <span id="flushing_total_price">0</span></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>லேபர் பேட்டா</td>
+                    <td>
+                        <div class="price-box">₹ <input type="number" min="0" value="0"></div>
+                    </td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- NET TOTAL -->
+        <div class="section">
+            <div class="section-title"></div>
+            <div style="text-align: right;"> 
+                மொத்த கட்டணம் (டிரில்லிங் + கேசிங் + ஃபிளஷிங் + லேபர்) ₹ <input type="number" min="0" value="0">
+            </div>
+        </div>
+
+
+        <!-- ACTION BUTTONS -->
+        <div class="buttons">
+            <label class="checkbox-btn">
+                <input type="checkbox" id="editToggle" onchange="toggleEditFeet(this)">
+                Edit Feet
+            </label>
+            <label class="checkbox-btn">
+                <input type="checkbox" id="excludeHeader">
+                Exclude Logo
+            </label>
+            <button class="action-btn" onclick="downloadImage()">🖼 Image</button>
+            <button class="action-btn" onclick="generatePDF()">📄 PDF</button>
+            <button class="action-btn" onclick="window.print()">🖨 Print</button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// === DRILLING TOTALS ===
+function calculateTotals() {
+    let total65 = 0, total8 = 0;
+    const rows = document.querySelectorAll(".drill-row");
+    
+    if (rows.length === 0) return;
+
+    rows.forEach(row => {
+        const start = +row.dataset.start;
+        const end   = +row.dataset.end;
+        const feet  = end - start + 1;
+        const r65 = +row.querySelector(".rate65").value || 0;
+        const r8  = +row.querySelector(".rate8").value || 0;
+        total65 += feet * r65;
+        total8  += feet * r8;
+    });
+
+    const lastEnd = rows[rows.length - 1].dataset.end;
+    document.getElementById("drill_total_label").innerText = `டிரில்லிங் ${lastEnd} அடிகளுக்கு மொத்தம்`;
+
+    total_65.innerText = total65.toFixed(2);
+    total_8.innerText  = total8.toFixed(2);
+}
+
+// === END FEET EDITING ===
+function updateEndFeet(input) {
+    const row = input.closest(".drill-row");
+    row.dataset.end = +input.value || row.dataset.start;
+    calculateTotals();
+}
+function validateEndFeet(input) {
+    const row = input.closest(".drill-row");
+    const start = +row.dataset.start;
+    let end = +input.value;
+    if (isNaN(end) || end <= start) {
+        end = start + 1;
+        input.value = end;
+    }
+    row.dataset.end = end;
+    calculateTotals();
+}
+
+// === ADD NEXT SLAB ===
+function addNextSlab() {
+    const rows = document.querySelectorAll(".drill-row");
+    const lastRow = rows[rows.length - 1];
+    lastRow.querySelector(".add-slab").classList.add("hidden");
+    const prevEnd = +lastRow.dataset.end;
+    const start = prevEnd + 1;
+    const end   = prevEnd + 100;
+
+    const tr = document.createElement("tr");
+    tr.className = "drill-row";
+    tr.dataset.start = start;
+    tr.dataset.end   = end;
+    tr.innerHTML = `
+<td class="slab-cell">
+    <div class="icon-holder">
+        <div class="add-slab" onclick="addNextSlab()">+</div>
+    </div>
+    <span>
+        <input class="feet-input" value="${start}" disabled> –
+        <input class="feet-input end-feet" value="${end}" disabled
+               oninput="updateEndFeet(this)" onblur="validateEndFeet(this)"> அடி
+    </span>
+</td>
+<td><div class="price-box">₹ <input class="rate65" type="number" oninput="calculateTotals()"></div></td>
+<td><div class="price-box">₹ <input class="rate8" type="number" oninput="calculateTotals()"></div></td>
+<td></td>`;
+    lastRow.after(tr);
+    calculateTotals();
+    toggleEditFeet(document.getElementById("editToggle"));
+}
+
+// === EDIT LAST FEET ONLY + PVC / FLUSHING FEET ===
+function toggleEditFeet(cb) {
+    // reset all end-feet and PVC/Flushing inputs
+    document.querySelectorAll(".end-feet").forEach(i => i.disabled = true);
+    const pvcInput = document.getElementById("pvc_total_feet");
+    const flushInput = document.getElementById("flushing_total_feet");
+    
+    pvcInput.disabled = true;
+    flushInput.disabled = true;
+
+    // reset styles
+    pvcInput.style.pointerEvents = "none";
+    flushInput.style.pointerEvents = "none";
+    pvcInput.style.backgroundColor = "#2d6cdf";
+    flushInput.style.backgroundColor = "#2d6cdf";
+    pvcInput.style.color = "#fff";
+    flushInput.style.color = "#fff";
+
+    if (!cb.checked) return;
+
+    // enable last drilling row
+    const rows = document.querySelectorAll(".drill-row");
+    const lastEndInput = rows[rows.length - 1].querySelector(".end-feet");
+    lastEndInput.disabled = false;
+    lastEndInput.focus();
+
+    // enable PVC / Flushing inputs
+    pvcInput.disabled = false;
+    flushInput.disabled = false;
+    pvcInput.style.pointerEvents = "auto";
+    flushInput.style.pointerEvents = "auto";
+    pvcInput.style.backgroundColor = "#fff";
+    flushInput.style.backgroundColor = "#fff";
+    pvcInput.style.color = "#000";
+    flushInput.style.color = "#000";
+}
+
+
+// === PVC / FLUSHING CALCULATIONS ===
+function calculatePVC() {
+    const totalFeet = parseFloat(document.getElementById("pvc_total_feet").value) || 0;
+    const pvc7Rate  = parseFloat(document.getElementById("pvc7_1feet_price").value) || 0;
+    const pvc10Rate = parseFloat(document.getElementById("pvc10_1feet_price").value) || 0;
+    document.getElementById("pvc7_total_feet_price").innerText  = (totalFeet*pvc7Rate).toFixed(2);
+    document.getElementById("pvc10_total_feet_price").innerText = (totalFeet*pvc10Rate).toFixed(2);
+}
+function calculateFlushing() {
+    const feet = parseFloat(document.getElementById("flushing_total_feet").value) || 0;
+    const rate = parseFloat(document.getElementById("flushing_1feet_price").value) || 0;
+    document.getElementById("flushing_total_price").innerText = (feet*rate).toFixed(2);
+}
+
+// === PDF / IMAGE ===
+function hideButtons(h) {
+    document.querySelector(".buttons").classList.toggle("hide", h);
+    if (h && document.getElementById("excludeHeader").checked) {
+        document.getElementById("headerSection").style.display = "none";
+    } else {
+        document.getElementById("headerSection").style.display = "flex";
+    }
+}
+
+async function generatePDF() {
+    hideButtons(true);
+    const pdf = new jspdf.jsPDF("p","mm","a4");
+    const invoice = document.getElementById("invoice");
+    const canvas = await html2canvas(invoice,{scale:2,useCORS:true});
+    const imgData = canvas.toDataURL("image/png");
+    const pageWidth  = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const ratio = Math.min(pageWidth/canvas.width, pageHeight/canvas.height);
+    const width = canvas.width * ratio;
+    const height = canvas.height * ratio;
+    const x = (pageWidth-width)/2;
+    const y = (pageHeight-height)/2;
+    pdf.addImage(imgData,"PNG",x,y,width,height,"FAST");
+    pdf.save("borwell.pdf");
+    hideButtons(false);
+}
+
+function downloadImage() {
+    hideButtons(true);
+    html2canvas(document.getElementById("invoice"), { scale: 2 }).then(c => {
+        const a = document.createElement("a");
+        a.download = "borwell.png";
+        a.href = c.toDataURL();
+        a.click();
+        hideButtons(false);
+    });
+}
+
+// Initialize totals on page load
+window.onload = calculateTotals;
+</script>
+
+</body>
+</html>
