@@ -97,7 +97,7 @@ input { padding: 5px; text-align: right; font-size: 14px; }
     border: none;
     background: #2d6cdf;
     color: #fff;
-    font-weight: bold;
+    /*font-weight: bold;*/
     pointer-events: none;
     text-align: center;
     width: 6ch;
@@ -152,6 +152,42 @@ input { padding: 5px; text-align: right; font-size: 14px; }
     cursor: pointer;
 }
 .checkbox-btn input { display: none; }
+
+
+/* BUTTON-LIKE TOGGLE (Exclude Logo) */
+.checkbox-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 22px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 6px;
+    background: #2d6cdf;
+    color: #fff;
+    transition: all 0.2s ease;
+}
+
+/* Hide native checkbox */
+.checkbox-btn input {
+    display: none;
+}
+
+/* Tick mark hidden by default */
+.checkbox-btn .checkmark {
+    display: none;
+    font-size: 16px;
+}
+
+/* Show tick when checked */
+.checkbox-btn input:checked ~ .checkmark {
+    display: inline;
+}
+
+/* Hover effect */
+.checkbox-btn:hover {
+    background: #1f54b5;
+}
 
 /* PRINT */
 @media print {
@@ -307,12 +343,12 @@ input { padding: 5px; text-align: right; font-size: 14px; }
                 Edit Feet
             </label>
             <label class="checkbox-btn">
-                <input type="checkbox" id="excludeHeader">
-                Exclude Logo
+                <input type="checkbox" id="excludeHeader" onchange="toggleHeader()">
+                <span class="checkmark">✔</span>
+                <span class="text">Remove Logo</span>
             </label>
             <button class="action-btn" onclick="downloadImage()">🖼 Image</button>
             <button class="action-btn" onclick="generatePDF()">📄 PDF</button>
-            <button class="action-btn" onclick="window.print()">🖨 Print</button>
         </div>
 
     </div>
@@ -482,6 +518,12 @@ function downloadImage() {
         a.click();
         hideButtons(false);
     });
+}
+
+function toggleHeader() {
+    const header = document.getElementById("headerSection");
+    const checked = document.getElementById("excludeHeader").checked;
+    header.style.display = checked ? "none" : "flex";
 }
 
 // Initialize totals on page load
